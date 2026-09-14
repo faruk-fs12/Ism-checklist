@@ -1,0 +1,46 @@
+name: Build ISM Checklist APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - ana
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository dosyalarini al
+        uses: actions/checkout@v4
+
+      - name: JDK 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: ZIP dosyasini ac
+        run: |
+          mkdir android-project
+          unzip ISM_Checklist_Cargo_Operations_V1.zip -d android-project
+          ls -la android-project
+
+      - name: Kotlin surumunu build icin duzelt
+        run: |
+          sed -i 's/2.0.21/1.9.25/g' android-project/build.gradle.kts
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: APK derle
+        working-directory: android-project
+        run: gradle assembleDebug --stacktrace
+
+      - name: APK dosyasini yayinla
+        uses: actions/upload-artifact@v4
+        with:
+          name: ISM-Checklist-APK
+          path: android-project/app/build/outputs/apk/debug/app-debug.apk
