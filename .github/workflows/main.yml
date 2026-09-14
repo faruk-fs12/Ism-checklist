@@ -26,9 +26,10 @@ jobs:
           unzip ISM_Checklist_Cargo_Operations_V1.zip -d android-project
           ls -la android-project
 
-      - name: Kotlin surumunu build icin duzelt
+      - name: Kotlin ve JVM ayarlarini duzelt
         run: |
           sed -i 's/2.0.21/1.9.25/g' android-project/build.gradle.kts
+          sed -i '/android {/a\    kotlinOptions { jvmTarget = "1.8" }' android-project/app/build.gradle.kts
 
       - name: Gradle kur
         uses: gradle/actions/setup-gradle@v4
