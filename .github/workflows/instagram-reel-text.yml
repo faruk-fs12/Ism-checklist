@@ -1,0 +1,29 @@
+name: Instagram Reel text extraction
+on:
+  push:
+    paths: ['.github/workflows/instagram-reel-text.yml']
+  workflow_dispatch:
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-eng
+          python -m pip install -q -U yt-dlp
+      - name: Download reel and extract visible text
+        shell: bash
+        run: |
+          mkdir -p output/frames
+          yt-dlp --no-playlist -f 'bv*+ba/b' -o 'output/reel.%(ext)s' 'https://www.instagram.com/reel/DespFrxRsL4/' 2>&1 | tee output/download.log
+          video=$(find output -maxdepth 1 -type f \( -name '*.mp4' -o -name '*.webm' \) | head -1)
+          if [ -n "$video" ]; then
+            ffmpeg -hide_banner -loglevel error -i "$video" -vf fps=1/2 -q:v 3 output/frames/frame_%04d.jpg
+            for f in output/frames/*.jpg; do echo "=== $f ==="; tesseract "$f" stdout 2>/dev/null; done | tee output/text.txt
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instagram-reel-analysis
+          path: output/
